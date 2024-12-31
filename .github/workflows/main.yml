@@ -23,6 +23,9 @@ jobs:
             target: esp32s3
             # Command to run inside the docker container (default: builds the project)
             command: idf.py build
+      - name: Install esptool.py
+        run: |
+          python3 -m pip install esptool
       - name: Merge binary files
         run: |
           esptool.py --chip esp32 merge_bin \
