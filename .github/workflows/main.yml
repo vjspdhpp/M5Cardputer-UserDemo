@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       
-      - name: Run esp-idf-ci-action
+      - name: Run ESP IDF CI
         uses: espressif/esp-idf-ci-action@v1.1.0
         with:
             # Relative path under $GITHUB_WORKSPACE to place the repository
@@ -23,3 +23,21 @@ jobs:
             target: esp32s3
             # Command to run inside the docker container (default: builds the project)
             command: idf.py build
+      - name: Merge binary files
+        run: |
+          esptool.py --chip esp32 merge_bin \
+          --flash_mode dio \
+          --flash_freq 40m \
+          --flash_size 4MB \
+          0x0000 build/bootloader/bootloader.bin \
+          0x8000 build/partition_table/partition-table.bin \
+          0x10000 build/cardputer.bin \
+          -o cardputer.bin
+      - name: Get commit hash
+        id: get_commit_hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Upload merged firmware
+        uses: actions/upload-artifact@v3
+        with:
+          name: cardputer-${{ env.COMMIT_HASH }}.bin
+          path: cardputer.bin
